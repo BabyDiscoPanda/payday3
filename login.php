@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Update usersLastLogIn to current date
             $updateQuery = "UPDATE users SET usersLastLogIn = NOW() WHERE usersId = ?";
             executeNonQuery($pdo, $updateQuery, [$result[0]['usersId']]);
-            header('Location: index.php');
+            header('Location: admin/index.php');
             exit;
         } else {
             $error = 'Invalid username or password.';

@@ -1,3 +1,4 @@
 cred.pem
 DB/
 sql/
+news/*.php
