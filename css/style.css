@@ -1,0 +1,144 @@
+/* Payday 3 News Website Inspired CSS */
+
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Roboto:wght@400;700&display=swap');
+
+:root {
+    --primary-bg: #181a1b;
+    --secondary-bg: #232526;
+    --accent: #00e0ff;
+    --text-main: #f5f5f5;
+    --text-muted: #b0b0b0;
+    --card-bg: #222325;
+    --border-radius: 8px;
+}
+
+body {
+    background: var(--primary-bg);
+    color: var(--text-main);
+    font-family: 'Roboto', Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background: linear-gradient(90deg, #181a1b 60%, #51ac07 100%);
+    padding: 32px 0 24px 0;
+    text-align: center;
+}
+
+header h1 {
+    font-family: 'Oswald', Arial, sans-serif;
+    font-size: 3rem;
+    color: var(--accent);
+    letter-spacing: 2px;
+    margin: 0;
+    text-shadow: 0 2px 16px #00e0ff44;
+}
+
+nav {
+    margin-top: 16px;
+}
+
+nav a {
+    color: var(--text-main);
+    text-decoration: none;
+    margin: 0 18px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: color 0.2s;
+}
+
+nav a:hover {
+    color: var(--accent);
+}
+
+.main-content {
+    max-width: 900px;
+    margin: 40px auto 0 auto;
+    padding: 0 16px;
+}
+
+.news-card {
+    background: var(--card-bg);
+    border-radius: var(--border-radius);
+    box-shadow: 0 2px 16px #000a;
+    margin-bottom: 32px;
+    overflow: hidden;
+    transition: transform 0.2s;
+}
+
+.news-card:hover {
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: 0 4px 32px #00e0ff33;
+}
+
+.news-card img {
+    width: 100%;
+    display: block;
+    max-height: 320px;
+    object-fit: cover;
+}
+
+.news-card-content {
+    padding: 24px;
+}
+
+.news-card-title {
+    font-family: 'Oswald', Arial, sans-serif;
+    font-size: 2rem;
+    color: var(--accent);
+    margin: 0 0 12px 0;
+}
+
+.news-card-meta {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    margin-bottom: 16px;
+}
+
+.news-card-text {
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+.button {
+    display: inline-block;
+    background: var(--accent);
+    color: #181a1b;
+    font-weight: bold;
+    padding: 12px 28px;
+    border-radius: 4px;
+    text-decoration: none;
+    margin-top: 18px;
+    letter-spacing: 1px;
+    transition: background 0.2s, color 0.2s;
+}
+
+.button:hover {
+    background: #00b3cc;
+    color: #fff;
+}
+
+footer {
+    background: var(--secondary-bg);
+    color: var(--text-muted);
+    text-align: center;
+    padding: 24px 0;
+    margin-top: 48px;
+    font-size: 1rem;
+    letter-spacing: 1px;
+}
+
+/* Responsive */
+@media (max-width: 700px) {
+    header h1 {
+        font-size: 2rem;
+    }
+    .main-content {
+        padding: 0 4px;
+    }
+    .news-card-content {
+        padding: 14px;
+    }
+}
