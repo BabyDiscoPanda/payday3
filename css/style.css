@@ -102,6 +102,13 @@ nav a:hover {
     line-height: 1.6;
 }
 
+.news-item-date {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-top: 8px;
+    text-align: center;
+}
+
 .button {
     display: inline-block;
     background: var(--accent);

@@ -15,12 +15,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $title = trim($_POST['title'] ?? '');
     $date = $_POST['date'] ?? date('Y-m-d');
     $url = trim($_POST['url'] ?? '');
+    $summary = trim($_POST['summary'] ?? '');
     $content = trim($_POST['content'] ?? '');
     $images = $_FILES['images'] ?? null;
     $imagePaths = [];
+    $primaryImg = '';
     $subtitleImages = [];
 
-    if ($title && $date && $url && $content) {
+    if ($title && $date && $url && $summary && $content) {
         // Handle image uploads
         if ($images && isset($images['name']) && is_array($images['name'])) {
             $uploadDir = __DIR__ . '/../news_images/';
@@ -37,6 +39,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
             }
+            // Set primary image if at least one image uploaded
+            if (!empty($imagePaths)) {
+                $primaryImg = $imagePaths[0];
+            }
         }
         // Save content as a PHP file in /news/ directory
         $filename = basename($url);
@@ -44,8 +50,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'URL must be a valid filename (letters, numbers, - or _).';
         } else {
             // Insert news to get the ID
-            $query = "INSERT INTO news (newsTitle, newsDate, newsURL) VALUES (?, ?, ?)";
-            $result = executeNonQuery($pdo, $query, [$title, $date, 'news/' . $filename . '.php']);
+            $query = "INSERT INTO news (newsTitle, newsDate, newsURL, newsSummary, newsPrimaryImg) VALUES (?, ?, ?, ?, ?)";
+            $result = executeNonQuery($pdo, $query, [$title, $date, 'news/' . $filename . '.php', $summary, $primaryImg]);
             if ($result) {
                 $newsId = getLastInsertId($pdo);
                 $filepath = __DIR__ . '/../news/' . $filename . '.php';
@@ -72,6 +78,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 // Content with subtitle images
                 $phpContent .= customMarkdownToHtmlWithSubtitleImages($content, $imagePaths);
+                $phpContent .= "<p class='news-item-date'>" . date('d M Y', strtotime($date)) . "</p>\n";
+                $phpContent .= "</div>\n";
                 // Footer include
                 $phpContent .= "<?php include __DIR__ . '/../includes/footer.php'; ?>\n";
                 $phpContent .= "</body>\n</html>\n";
@@ -120,39 +128,38 @@ function customMarkdownToHtmlWithSubtitleImages($text, $imagePaths) {
 </head>
 <body>
     <?php include '../includes/header.php'; ?>
-    <div class="main-content" style="max-width:500px;margin:40px auto;">
-        <div class="news-card">
-            <div class="news-card-content">
-                <h2 class="news-card-title" style="text-align:center;">Add New Event</h2>
-                <?php if ($success): ?>
-                    <div style="color:#51ac07;text-align:center;margin-bottom:16px;">
-                        <?= htmlspecialchars($success) ?>
-                    </div>
-                <?php elseif ($error): ?>
-                    <div style="color:#ff4d4d;text-align:center;margin-bottom:16px;">
-                        <?= htmlspecialchars($error) ?>
-                    </div>
-                <?php endif; ?>
-                <form method="post" autocomplete="off" enctype="multipart/form-data">
-                    <label for="title">Title</label><br>
-                    <input type="text" id="title" name="title" required style="width:100%;padding:10px;margin-bottom:16px;border-radius:4px;border:1px solid #333;background:#232526;color:#f5f5f5;">
-                    <br>
-                    <label for="date">Date</label><br>
-                    <input type="date" id="date" name="date" value="<?= date('Y-m-d') ?>" required style="width:100%;padding:10px;margin-bottom:16px;border-radius:4px;border:1px solid #333;background:#232526;color:#f5f5f5;">
-                    <br>
-                    <label for="url">URL (filename, no extension)</label><br>
-                    <input type="text" id="url" name="url" required style="width:100%;padding:10px;margin-bottom:16px;border-radius:4px;border:1px solid #333;background:#232526;color:#f5f5f5;">
-                    <br>
-                    <label for="content">Content (custom markdown)</label><br>
-                    <textarea id="content" name="content" rows="10" required style="width:100%;padding:10px;margin-bottom:24px;border-radius:4px;border:1px solid #333;background:#232526;color:#f5f5f5;"></textarea>
-                    <br>
-                    <label for="images">Images (optional, you can select multiple):</label><br>
-                    <input type="file" id="images" name="images[]" multiple accept="image/*" style="margin-bottom:16px;">
-                    <br>
-                    <button type="submit" class="button" style="width:100%;">Add Event</button>
-                </form>
+    <div class="main-content" style="max-width:600px;margin:40px auto;">
+        <h2 class="news-card-title" style="text-align:center;">Add New Event</h2>
+        <?php if ($success): ?>
+            <div style="color:#51ac07;text-align:center;margin-bottom:16px;">
+                <?= htmlspecialchars($success) ?>
             </div>
-        </div>
+        <?php elseif ($error): ?>
+            <div style="color:#ff4d4d;text-align:center;margin-bottom:16px;">
+                <?= htmlspecialchars($error) ?>
+            </div>
+        <?php endif; ?>
+        <form method="post" autocomplete="off" enctype="multipart/form-data" style="margin:0 auto;max-width:500px;display:flex;flex-direction:column;align-items:center;">
+            <label for="title" style="align-self:flex-start;">Title</label><br>
+            <input type="text" id="title" name="title" required style="width:100%;padding:10px;margin-bottom:16px;border-radius:4px;border:1px solid #333;background:#232526;color:#f5f5f5;">
+            <br>
+            <label for="date" style="align-self:flex-start;">Date</label><br>
+            <input type="date" id="date" name="date" value="<?= date('Y-m-d') ?>" required style="width:100%;padding:10px;margin-bottom:16px;border-radius:4px;border:1px solid #333;background:#232526;color:#f5f5f5;">
+            <br>
+            <label for="url" style="align-self:flex-start;">URL (filename, no extension)</label><br>
+            <input type="text" id="url" name="url" required style="width:100%;padding:10px;margin-bottom:16px;border-radius:4px;border:1px solid #333;background:#232526;color:#f5f5f5;">
+            <br>
+            <label for="summary" style="align-self:flex-start;">Summary</label><br>
+            <textarea id="summary" name="summary" rows="3" required style="width:100%;padding:10px;margin-bottom:16px;border-radius:4px;border:1px solid #333;background:#232526;color:#f5f5f5;"></textarea>
+            <br>
+            <label for="content" style="align-self:flex-start;">Content (custom markdown)</label><br>
+            <textarea id="content" name="content" rows="10" required style="width:100%;padding:10px;margin-bottom:24px;border-radius:4px;border:1px solid #333;background:#232526;color:#f5f5f5;"></textarea>
+            <br>
+            <label for="images" style="align-self:flex-start;">Images (optional, you can select multiple):</label><br>
+            <input type="file" id="images" name="images[]" multiple accept="image/*" style="margin-bottom:16px;width:100%;">
+            <br>
+            <button type="submit" class="button" style="width:100%;">Add Event</button>
+        </form>
     </div>
     <?php include '../includes/footer.php'; ?>
 </body>

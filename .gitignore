@@ -3,3 +3,4 @@ DB/
 sql/
 news/*.php
 news_images/*
+.github/

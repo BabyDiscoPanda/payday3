@@ -1,8 +1,10 @@
 <?php
 // Simple header for Payday 3 News Website
 
-session_start();
-
+//check if session is started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 ?>
 <header>

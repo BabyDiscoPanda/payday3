@@ -20,17 +20,22 @@ $newsItems = executeQuery($pdo, $query);
 <body>
     <?php include 'includes/header.php'; ?>
     <main>
-        <h2>Contenu Principal</h2>
+        <h1>Contenu Principal</h1>
         <p>Ceci est un exemple de page d'accueil.</p>
     </main>
     <div class="main-content" style="max-width:400px;margin:40px auto;">
         <?php if (count($newsItems) > 0): ?>
             <?php foreach ($newsItems as $news): ?>
-                <div class="news-card" href="/<?= $news['newsURL'] ?>">
+                <div class="news-card" onclick="window.location.href='/<?= htmlspecialchars($news['newsURL']) ?>';">
                     <div class="news-card-content">
-                        <h2 class="news-card-title" style="text-align:center;">Dernières Actualités</h2>
+                        <h2 class="news-card-title" style="text-align:center;"><?= htmlspecialchars($news['newsTitle']) ?></h2>
                         <div class="news-item">
-                            <h3 class="news-item-title"><?= htmlspecialchars($news['newsTitle']) ?></h3>
+                            <?php if (!empty($news['newsPrimaryImg'])): ?>
+                                <div class="news-images">
+                                    <img src="/<?= htmlspecialchars($news['newsPrimaryImg']) ?>" style="max-width:100%;margin-bottom:10px;" />
+                                </div>
+                            <?php endif; ?>
+                            <p class="news-item-content"><?= htmlspecialchars($news['newsSummary']) ?></p>
                             <p class="news-item-date"><?= date('d M Y', strtotime($news['newsDate'])) ?></p>
                         </div>
                     </div>
