@@ -16,25 +16,74 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $date = $_POST['date'] ?? date('Y-m-d');
     $url = trim($_POST['url'] ?? '');
     $content = trim($_POST['content'] ?? '');
-    
+    $images = $_FILES['images'] ?? null;
+    $imagePaths = [];
+    $subtitleImages = [];
+
     if ($title && $date && $url && $content) {
+        // Handle image uploads
+        if ($images && isset($images['name']) && is_array($images['name'])) {
+            $uploadDir = __DIR__ . '/../news_images/';
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0777, true);
+            }
+            for ($i = 0; $i < count($images['name']); $i++) {
+                if ($images['error'][$i] === UPLOAD_ERR_OK) {
+                    $tmpName = $images['tmp_name'][$i];
+                    $baseName = basename($images['name'][$i]);
+                    $targetPath = $uploadDir . uniqid('img_') . '_' . $baseName;
+                    if (move_uploaded_file($tmpName, $targetPath)) {
+                        $imagePaths[] = 'news_images/' . basename($targetPath);
+                    }
+                }
+            }
+        }
         // Save content as a PHP file in /news/ directory
         $filename = basename($url);
         if (!preg_match('/^[a-zA-Z0-9_-]+$/', $filename)) {
             $error = 'URL must be a valid filename (letters, numbers, - or _).';
         } else {
-            $filepath = __DIR__ . '/../news/' . $filename . '.php';
-            $phpContent = "<?php\n?>\n" . customMarkdownToHtml($content);
-            if (file_put_contents($filepath, $phpContent) !== false) {
-                $query = "INSERT INTO news (newsTitle, newsDate, newsURL) VALUES (?, ?, ?)";
-                $result = executeNonQuery($pdo, $query, [$title, $date, 'news/' . $filename . '.php']);
-                if ($result) {
+            // Insert news to get the ID
+            $query = "INSERT INTO news (newsTitle, newsDate, newsURL) VALUES (?, ?, ?)";
+            $result = executeNonQuery($pdo, $query, [$title, $date, 'news/' . $filename . '.php']);
+            if ($result) {
+                $newsId = getLastInsertId($pdo);
+                $filepath = __DIR__ . '/../news/' . $filename . '.php';
+                $phpContent = "<?php\nsession_start();\n\$newsId = $newsId;\n?>\n";
+                $phpContent .= "<!DOCTYPE html>\n";
+                $phpContent .= "<html lang='en'>\n<head>\n";
+                $phpContent .= "    <meta charset='UTF-8'>\n";
+                $phpContent .= "    <meta name='viewport' content='width=device-width, initial-scale=1.0'>\n";
+                $phpContent .= "    <title>" . htmlspecialchars($title) . "</title>\n";
+                $phpContent .= "    <link rel='stylesheet' href='/css/style.css'>\n";
+                $phpContent .= "</head>\n<body>\n";
+                $phpContent .= "    <div class='main-content' style='max-width:800px;margin:40px auto;'>\n";
+                // Include header
+                $phpContent .= "<?php include __DIR__ . '/../includes/header.php'; ?>\n";
+                // Main title
+                $phpContent .= "<h1>" . htmlspecialchars($title) . "</h1>\n";
+                // Add images to the top
+                if (!empty($imagePaths)) {
+                    $imgHtml = "<div class='news-images'>";
+                    foreach ($imagePaths as $img) {
+                        $imgHtml .= "<img src='/" . htmlspecialchars($img) . "' style='max-width:100%;margin-bottom:10px;' />";
+                    }
+                    $imgHtml .= "</div>\n";
+                    $phpContent .= $imgHtml;
+                }
+                // Content with subtitle images
+                $phpContent .= customMarkdownToHtmlWithSubtitleImages($content, $imagePaths);
+                // Footer include
+                $phpContent .= "<?php include __DIR__ . '/../includes/footer.php'; ?>\n";
+                $phpContent .= "</body>\n</html>\n";
+                // Write to file
+                if (file_put_contents($filepath, $phpContent) !== false) {
                     $success = 'Event added successfully!';
                 } else {
-                    $error = 'Failed to add event to database.';
+                    $error = 'Failed to write news file.';
                 }
             } else {
-                $error = 'Failed to write news file.';
+                $error = 'Failed to add event to database.';
             }
         }
     } else {
@@ -42,14 +91,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-function customMarkdownToHtml($text) {
-    // <title>...</title> => <h1>...</h1>
-    $text = preg_replace('/<title>(.*?)<\/title>/is', '<h1>$1</h1>', $text);
+function customMarkdownToHtmlWithSubtitleImages($text, $imagePaths) {
+    // <subtitle>...</subtitle> => <h2>...</h2> (with optional image below if [img] is present)
+    $imgIndex = 0;
+    $text = preg_replace_callback('/<subtitle>(.*?)<\/subtitle>/is', function($matches) use (&$imgIndex, $imagePaths) {
+        $html = '<h2>' . htmlspecialchars($matches[1]) . '</h2>';
+        // If [img] is present after subtitle, insert image
+        if (isset($imagePaths[$imgIndex])) {
+            $html .= "<img src='/" . htmlspecialchars($imagePaths[$imgIndex]) . "' style='max-width:100%;margin-bottom:10px;' />";
+            $imgIndex++;
+        }
+        return $html;
+    }, $text);
     // <p>...</p> => <p>...</p>
     $text = preg_replace('/<p>(.*?)<\/p>/is', '<p>$1</p>', $text);
     // <list>...</list> => <ul>...</ul>
     $text = preg_replace('/<list>(.*?)<\/list>/is', '<ul>$1</ul>', $text);
-    // <item>...</item> => <li>...</li>
     $text = preg_replace('/<item>(.*?)<\/item>/is', '<li>$1</li>', $text);
     return $text;
 }
@@ -77,7 +134,7 @@ function customMarkdownToHtml($text) {
                         <?= htmlspecialchars($error) ?>
                     </div>
                 <?php endif; ?>
-                <form method="post" autocomplete="off">
+                <form method="post" autocomplete="off" enctype="multipart/form-data">
                     <label for="title">Title</label><br>
                     <input type="text" id="title" name="title" required style="width:100%;padding:10px;margin-bottom:16px;border-radius:4px;border:1px solid #333;background:#232526;color:#f5f5f5;">
                     <br>
@@ -89,6 +146,9 @@ function customMarkdownToHtml($text) {
                     <br>
                     <label for="content">Content (custom markdown)</label><br>
                     <textarea id="content" name="content" rows="10" required style="width:100%;padding:10px;margin-bottom:24px;border-radius:4px;border:1px solid #333;background:#232526;color:#f5f5f5;"></textarea>
+                    <br>
+                    <label for="images">Images (optional, you can select multiple):</label><br>
+                    <input type="file" id="images" name="images[]" multiple accept="image/*" style="margin-bottom:16px;">
                     <br>
                     <button type="submit" class="button" style="width:100%;">Add Event</button>
                 </form>

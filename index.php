@@ -1,3 +1,12 @@
+<?php
+session_start();
+require_once __DIR__ . '/DB/db.php';
+// Fetch the latest news from the database
+$query = "SELECT * FROM news ORDER BY newsDate DESC LIMIT 5";
+$newsItems = executeQuery($pdo, $query);
+
+?>
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
