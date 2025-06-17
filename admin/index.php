@@ -57,16 +57,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $phpContent .= "    <title>" . htmlspecialchars($title) . "</title>\n";
                 $phpContent .= "    <link rel='stylesheet' href='/css/style.css'>\n";
                 $phpContent .= "</head>\n<body>\n";
-                $phpContent .= "    <div class='main-content' style='max-width:800px;margin:40px auto;'>\n";
-                // Include header
                 $phpContent .= "<?php include __DIR__ . '/../includes/header.php'; ?>\n";
+                $phpContent .= "<div class='main-content' style='max-width:800px;margin:40px auto;'>\n";
                 // Main title
                 $phpContent .= "<h1>" . htmlspecialchars($title) . "</h1>\n";
                 // Add images to the top
                 if (!empty($imagePaths)) {
                     $imgHtml = "<div class='news-images'>";
-                    foreach ($imagePaths as $img) {
-                        $imgHtml .= "<img src='/" . htmlspecialchars($img) . "' style='max-width:100%;margin-bottom:10px;' />";
+                    if($imagePaths!=null && count($imagePaths)>0) {
+                    $imgHtml .= "<img src='/" . htmlspecialchars($imagePaths[0]) . "' style='max-width:100%;margin-bottom:10px;' />";
                     }
                     $imgHtml .= "</div>\n";
                     $phpContent .= $imgHtml;
@@ -93,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 function customMarkdownToHtmlWithSubtitleImages($text, $imagePaths) {
     // <subtitle>...</subtitle> => <h2>...</h2> (with optional image below if [img] is present)
-    $imgIndex = 0;
+    $imgIndex = 1;
     $text = preg_replace_callback('/<subtitle>(.*?)<\/subtitle>/is', function($matches) use (&$imgIndex, $imagePaths) {
         $html = '<h2>' . htmlspecialchars($matches[1]) . '</h2>';
         // If [img] is present after subtitle, insert image
