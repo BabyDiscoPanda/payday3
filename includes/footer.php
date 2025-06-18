@@ -12,3 +12,15 @@
         <a href="/mentionsLegales.html">Mentions légales</a>
     </p>
 </footer>
+
+<script>
+    //the footer always on the bottom of the page
+    document.addEventListener('DOMContentLoaded', function() {
+        const footer = document.querySelector('footer');
+        const mainContent = document.querySelector('.main-content');
+        if (mainContent) {
+            mainContent.style.minHeight = `calc(100vh - ${footer.offsetHeight}px)`;
+        }
+    });
+
+</script>
